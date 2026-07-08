@@ -1,0 +1,6 @@
+{
+  "name": "Syncro Life",
+  "description": "Smart daily schedule, habit tracking, meal planning, and personalized AI food suggestions based on lifestyle and dietary constraints.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

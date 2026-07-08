@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Network security config for debug/test builds.
+  Allows HTTPS connections to the development backend running on the host machine
+  (10.0.2.2 is how Android Emulator reaches localhost on the host PC).
+  This config ONLY applies to debug builds and should be removed / scoped before production release.
+-->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="true">
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </base-config>
+    <domain-config cleartextTrafficPermitted="true">
+        <!-- Android Emulator: 10.0.2.2 maps to the host machine's localhost -->
+        <domain includeSubdomains="true">10.0.2.2</domain>
+        <!-- Physical device: the LAN IP of your development machine -->
+        <domain includeSubdomains="true">192.168.1.0</domain>
+        <!-- Desktop/Web testing via localhost -->
+        <domain includeSubdomains="true">localhost</domain>
+        <!-- MonsterASP API subdomain -->
+        <domain includeSubdomains="true">syncrolife.runasp.net</domain>
+        <trust-anchors>
+            <!-- Trust the system CA store (includes valid certs) -->
+            <certificates src="system" />
+            <!-- Trust user-installed certificates (dev HTTPS self-signed certs) -->
+            <certificates src="user" />
+        </trust-anchors>
+    </domain-config>
+</network-security-config>
