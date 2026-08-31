@@ -101,15 +101,22 @@ class _UpgradeScreenState extends State<UpgradeScreen> {
           _paymentPollTimer = null;
           
           if (mounted) {
-            Navigator.pop(context); // Close QR modal
-            await appState.loadAllData(); // Refresh profile
-            _showSuccessUpgradeDialog(); // Show success pop-up
+            if (Navigator.canPop(context)) {
+              Navigator.pop(context); // Close QR modal automatically
+            }
+            await appState.setPlusSubscription(); // Immediately switch active subscription to PLUS
+            await appState.loadAllData(); // Refresh user profile and subscription status from server
+            if (mounted) {
+              _showSuccessUpgradeDialog(); // Show success confirmation modal
+            }
           }
         } else if (status == 'failed') {
           timer.cancel();
           _paymentPollTimer = null;
           if (mounted) {
-            Navigator.pop(context);
+            if (Navigator.canPop(context)) {
+              Navigator.pop(context);
+            }
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(content: Text("Transaction cancelled or failed.")),
             );

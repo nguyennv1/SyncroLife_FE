@@ -29,7 +29,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   final GoogleSignIn _googleSignIn = GoogleSignIn(
     clientId: kIsWeb ? '112861230992-bp8aq8dqrd6s3nvt6enmv0hc9g9rsmcp.apps.googleusercontent.com' : null,
-    serverClientId: kIsWeb ? null : '112861230992-bp8aq8dqrd6s3nvt6enmv0hc9g9rsmcp.apps.googleusercontent.com',
+    serverClientId: '112861230992-bp8aq8dqrd6s3nvt6enmv0hc9g9rsmcp.apps.googleusercontent.com',
     scopes: <String>[
       'email',
       'https://www.googleapis.com/auth/calendar.events.readonly',
@@ -69,8 +69,12 @@ class _LoginScreenState extends State<LoginScreen> {
       _clearError();
       
       try {
-        final String? serverAuthCode = account.serverAuthCode;
-        if (serverAuthCode == null) {
+        String? serverAuthCode = account.serverAuthCode;
+        if (serverAuthCode == null || serverAuthCode.isEmpty) {
+          final auth = await account.authentication;
+          serverAuthCode = auth.idToken ?? auth.accessToken;
+        }
+        if (serverAuthCode == null || serverAuthCode.isEmpty) {
           setState(() {
             _errorMessage = "Google auth failed: Server Auth Code is null.";
           });
@@ -112,8 +116,12 @@ class _LoginScreenState extends State<LoginScreen> {
         return;
       }
 
-      final String? serverAuthCode = user.serverAuthCode;
-      if (serverAuthCode == null) {
+      String? serverAuthCode = user.serverAuthCode;
+      if (serverAuthCode == null || serverAuthCode.isEmpty) {
+        final auth = await user.authentication;
+        serverAuthCode = auth.idToken ?? auth.accessToken;
+      }
+      if (serverAuthCode == null || serverAuthCode.isEmpty) {
         setState(() {
           _errorMessage = "Google auth failed: Server Auth Code is null.";
         });
@@ -141,8 +149,12 @@ class _LoginScreenState extends State<LoginScreen> {
     _clearError();
     
     try {
-      final String? serverAuthCode = _pendingWebAccount!.serverAuthCode;
-      if (serverAuthCode == null) {
+      String? serverAuthCode = _pendingWebAccount!.serverAuthCode;
+      if (serverAuthCode == null || serverAuthCode.isEmpty) {
+        final auth = await _pendingWebAccount!.authentication;
+        serverAuthCode = auth.idToken ?? auth.accessToken;
+      }
+      if (serverAuthCode == null || serverAuthCode.isEmpty) {
         setState(() {
           _errorMessage = "Google auth failed: Server Auth Code is null.";
         });

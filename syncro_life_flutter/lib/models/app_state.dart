@@ -89,6 +89,8 @@ class AppState extends ChangeNotifier {
   final Map<String, dynamic> userProfileMock = {
     'name': "Guest User",
     'subscriptionType': "FREE",
+    'subscriptionPlan': "Free",
+    'planId': "8a6c40ca-ef52-4dfb-a977-127c1d66d08b",
     'bmi': 0.0,
     'targetCalories': 0.0,
     'monthlyBudget': 0.0,
@@ -139,6 +141,12 @@ class AppState extends ChangeNotifier {
       await prefs.setString('googlePhotoUrl', _googlePhotoUrl!);
     } else {
       await prefs.remove('googlePhotoUrl');
+    }
+    if (loggedInUserId != null && userProfile != null) {
+      final sub = userProfile!['subscriptionType'] ?? userProfile!['subscriptionPlan'];
+      if (sub != null && sub.toString().isNotEmpty) {
+        await prefs.setString('sub_${loggedInUserId!}', sub.toString());
+      }
     }
   }
 
@@ -250,14 +258,47 @@ class AppState extends ChangeNotifier {
     bool scheduleSuccess = false;
     bool goalsSuccess = false;
 
-    // 1. Fetch User Profile
+    // 1. Fetch User Profile & Ensure First-Time FREE vs Existing Subscription
     try {
-      userProfile = await _apiService.fetchUserDetails(targetUserId);
+      final fetchedProfile = await _apiService.fetchUserDetails(targetUserId);
+      final serverSub = fetchedProfile['subscriptionType'] ?? fetchedProfile['subscriptionPlan'];
+      
+      final prefs = await SharedPreferences.getInstance();
+      final localSub = prefs.getString('sub_$targetUserId');
+
+      userProfile = fetchedProfile;
+
+      if (serverSub != null && serverSub.toString().trim().isNotEmpty) {
+        // Server already has explicit subscription (FREE, PLUS, etc.) -> keep server subscription
+        userProfile!['subscriptionType'] = serverSub.toString();
+      } else if (localSub != null && localSub.isNotEmpty) {
+        // Server subscription is missing but user previously logged in and has saved sub (e.g. PLUS) -> keep existing
+        userProfile!['subscriptionType'] = localSub;
+      } else {
+        // CHỈ LẦN ĐẦU ĐĂNG NHẬP (Chưa từng có thông tin gói ở server lẫn local storage): mới gán gói FREE mặc định
+        userProfile!['subscriptionType'] = 'FREE';
+        userProfile!['subscriptionPlan'] = 'Free';
+        userProfile!['planId'] = '8a6c40ca-ef52-4dfb-a977-127c1d66d08b';
+      }
       profileSuccess = true;
     } catch (e) {
       debugPrint("AppState: Failed to load user profile: $e");
-      userProfile = null;
+      final prefs = await SharedPreferences.getInstance();
+      final localSub = prefs.getString('sub_$targetUserId');
+
+      // Preserve existing profile or fallback to saved subscription
+      if (userProfile == null) {
+        userProfile = {
+          'userId': targetUserId,
+          'username': loggedInUsername ?? 'User',
+          'subscriptionType': localSub ?? 'FREE',
+          'subscriptionPlan': (localSub?.toUpperCase() == 'PLUS') ? 'Plus' : 'Free',
+          'planId': (localSub?.toUpperCase() == 'PLUS') ? 'plus-plan-id' : '8a6c40ca-ef52-4dfb-a977-127c1d66d08b',
+        };
+      }
     }
+
+    await _saveSession();
 
     // 2. Fetch Today's Schedule
     try {
@@ -421,6 +462,23 @@ class AppState extends ChangeNotifier {
       notifyListeners();
       rethrow;
     }
+  }
+
+  Future<void> setPlusSubscription() async {
+    if (userProfile != null) {
+      userProfile!['subscriptionType'] = 'PLUS';
+      userProfile!['subscriptionPlan'] = 'Plus';
+    } else {
+      userProfile = {
+        'subscriptionType': 'PLUS',
+        'subscriptionPlan': 'Plus',
+      };
+    }
+    if (loggedInUserId != null) {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('sub_$loggedInUserId', 'PLUS');
+    }
+    notifyListeners();
   }
 
   void logout() {
