@@ -12,7 +12,7 @@ class ApiService {
   //   Physical Android device -> https://<YOUR-LAN-IP>:7142/api  (change manually)
   static String get _defaultBaseUrl {
     if (kIsWeb) {
-      return 'https://localhost:7142/api';
+      return '/api';
     }
     return 'http://syncrolife.runasp.net/api';
   }

@@ -39,7 +39,8 @@ class ProfileScreen extends StatelessWidget {
 
     // Parse name and tier
     final String name = user?['fullName']?.toString() ?? user?['username']?.toString() ?? user?['name']?.toString() ?? (appState.isLoggedIn ? 'No Profile Data' : 'Guest');
-    final String subType = user?['subscriptionType']?.toString() ?? user?['roleName']?.toString() ?? (appState.isLoggedIn ? 'FREE' : 'PREMIUM');
+    final String? rawSub = user?['subscriptionType']?.toString() ?? user?['subscriptionPlan']?.toString();
+    final String subType = (rawSub != null && rawSub.isNotEmpty) ? rawSub : 'FREE';
     final String subLabel = "${subType[0].toUpperCase()}${subType.substring(1).toLowerCase()} Member";
 
     // Parse metrics
